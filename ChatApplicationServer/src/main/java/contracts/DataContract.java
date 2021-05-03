@@ -6,15 +6,13 @@ import java.util.List;
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
 
-public class ClientJsonContract {
+public class DataContract {
 
     private String from;
 
     private List<String> to;
 
     private String message;
-
-    private Boolean subscribe;
 
     public List<String> getTo() {
         return to;
@@ -32,11 +30,6 @@ public class ClientJsonContract {
         this.message = message;
     }
 
-
-    public void setSubscribe(Boolean subscribe) {
-        this.subscribe = subscribe;
-    }
-
     public String getFrom() {
         return from;
     }
@@ -45,16 +38,11 @@ public class ClientJsonContract {
         this.from = from;
     }
 
-    public Boolean getSubscribe() {
-        return subscribe;
-    }
-
     @Override
     public String toString() {
         return "ClientJsonContract{" +
                 "to=" + to +
                 ", message='" + message + '\'' +
-                ", isRegistration=" + subscribe +
                 '}';
     }
 }

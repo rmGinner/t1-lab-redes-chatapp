@@ -11,13 +11,13 @@ public class RegisteredUser {
 
     private String id;
 
-    private InetAddress address;
-
-    private int port;
-
     private String nickName;
 
     private Duration duration;
+
+    private InetAddress address;
+
+    private int port;
 
     public RegisteredUser() {
         this.duration = Duration.ofSeconds(20);
@@ -29,22 +29,6 @@ public class RegisteredUser {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public InetAddress getAddress() {
-        return address;
-    }
-
-    public void setAddress(InetAddress address) {
-        this.address = address;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
     }
 
     public String getNickName() {
@@ -63,13 +47,30 @@ public class RegisteredUser {
         this.duration = duration;
     }
 
+    public InetAddress getAddress() {
+        return address;
+    }
+
+    public void setAddress(InetAddress address) {
+        this.address = address;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
     @Override
     public String toString() {
         return "RegisteredUser{" +
                 "id='" + id + '\'' +
+                ", nickName='" + nickName + '\'' +
+                ", duration=" + duration +
                 ", address=" + address +
                 ", port=" + port +
-                ", nickName='" + nickName + '\'' +
                 '}';
     }
 }

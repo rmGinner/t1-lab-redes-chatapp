@@ -17,8 +17,10 @@ public class Utils {
         try {
             return new Gson().toJson(object);
         } catch (Exception e) {
-            return null;
+            e.printStackTrace();
         }
+
+        return null;
     }
 
     public static <T> T parseJson(String json, Class<T> clazz) {
@@ -29,5 +31,11 @@ public class Utils {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public static String sanitizeNickName(String nickName) {
+        return nickName != null ?
+                nickName.trim().toLowerCase() :
+                null;
     }
 }

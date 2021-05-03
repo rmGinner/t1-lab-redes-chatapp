@@ -1,6 +1,8 @@
 package server;
 
+import models.CommandReceiver;
 import models.RegisteredUser;
+import models.UdpDataReceiver;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -16,33 +18,54 @@ import java.util.TimerTask;
 
 public class UdpServer {
 
-    private DatagramPacket receivePacket;
+    private DatagramSocket dataChannel;
 
-    private DatagramSocket datagramSocket;
+    private DatagramSocket commandChannel;
+
+    private static final Integer DATA_CHANNEL_PORT = 4390;
+
+    private static final Integer COMMAND_CHANNEL_PORT = 4391;
 
     private Timer timer = new Timer();
 
     public UdpServer() {
     }
 
-    public void start(int port) throws IOException {
-        this.datagramSocket = new DatagramSocket(port);
+    public void start() throws IOException {
+        this.dataChannel = new DatagramSocket(DATA_CHANNEL_PORT);
+        this.commandChannel = new DatagramSocket(COMMAND_CHANNEL_PORT);
     }
 
     public boolean isOpened() {
-        return !this.datagramSocket.isClosed();
+        return !this.dataChannel.isClosed();
     }
 
     public void stop() {
-        this.datagramSocket.close();
+        this.dataChannel.close();
     }
 
-    public String receiveData() throws IOException {
+    public UdpDataReceiver receiveData() throws IOException {
         byte[] receiveData = new byte[50000];
-        receivePacket = new DatagramPacket(receiveData, receiveData.length);
-        datagramSocket.receive(receivePacket);
+        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(), DATA_CHANNEL_PORT);
+        dataChannel.receive(receivePacket);
 
-        return new String(receivePacket.getData());
+        return new UdpDataReceiver(
+                receivePacket.getAddress(),
+                receivePacket.getPort(),
+                new String(receivePacket.getData())
+        );
+    }
+
+    public CommandReceiver receiveCommand() throws IOException {
+        byte[] receiveData = new byte[50000];
+        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(), COMMAND_CHANNEL_PORT);
+        commandChannel.receive(receivePacket);
+
+        return new CommandReceiver(
+                receivePacket.getAddress(),
+                receivePacket.getPort(),
+                new String(receivePacket.getData())
+        );
     }
 
     public void updateUserSession(RegisteredUser user) {
@@ -58,16 +81,8 @@ public class UdpServer {
         }, 0, 1000);
     }
 
-    public InetAddress getAddressFromLastReceivedPacket() {
-        return receivePacket.getAddress();
-    }
-
-    public int getPortFromLastReceivedPacket() {
-        return receivePacket.getPort();
-    }
-
     public void sendData(String data, InetAddress address, int port) throws IOException {
         byte[] sendData = data.getBytes();
-        datagramSocket.send(new DatagramPacket(sendData, sendData.length, address, port));
+        dataChannel.send(new DatagramPacket(sendData, sendData.length, address, port));
     }
 }

@@ -1,11 +1,7 @@
 import chat_impl.ChatServerImplementation;
-import models.RegisteredUser;
 import server.UdpServer;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
@@ -13,9 +9,10 @@ import java.util.TimerTask;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+
+    public static void main(String[] args) throws IOException {
         final var server = new UdpServer();
-        server.start(4390);
+        server.start();
 
         ChatServerImplementation chatServerImplementation = new ChatServerImplementation(server);
 
