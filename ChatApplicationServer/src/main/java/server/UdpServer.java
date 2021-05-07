@@ -1,6 +1,6 @@
 package server;
 
-import models.CommandReceiver;
+import models.ControlReceiver;
 import models.RegisteredUser;
 import models.UdpDataReceiver;
 
@@ -20,11 +20,11 @@ public class UdpServer {
 
     private DatagramSocket dataChannel;
 
-    private DatagramSocket commandChannel;
+    private DatagramSocket controlChannel;
 
     private static final Integer DATA_CHANNEL_PORT = 4390;
 
-    private static final Integer COMMAND_CHANNEL_PORT = 4391;
+    private static final Integer CONTROL_CHANNEL_PORT = 4391;
 
     private Timer timer = new Timer();
 
@@ -33,7 +33,7 @@ public class UdpServer {
 
     public void start() throws IOException {
         this.dataChannel = new DatagramSocket(DATA_CHANNEL_PORT);
-        this.commandChannel = new DatagramSocket(COMMAND_CHANNEL_PORT);
+        this.controlChannel = new DatagramSocket(CONTROL_CHANNEL_PORT);
     }
 
     public boolean isOpened() {
@@ -56,19 +56,19 @@ public class UdpServer {
         );
     }
 
-    public CommandReceiver receiveCommand() throws IOException {
+    public ControlReceiver receiveControl() throws IOException {
         byte[] receiveData = new byte[50000];
-        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(), COMMAND_CHANNEL_PORT);
-        commandChannel.receive(receivePacket);
+        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(), CONTROL_CHANNEL_PORT);
+        controlChannel.receive(receivePacket);
 
-        return new CommandReceiver(
+        return new ControlReceiver(
                 receivePacket.getAddress(),
                 receivePacket.getPort(),
                 new String(receivePacket.getData())
         );
     }
 
-    public void updateUserSession(RegisteredUser user) {
+    public void createUserSession(RegisteredUser user) {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {

@@ -4,17 +4,25 @@ package contracts;
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
 
-public class ResponseJsonContract {
+public class ResponseDataContract {
+
+    public ResponseDataContract(
+            String from,
+            String message
+    ) {
+        this.from = from;
+        this.message = message;
+    }
 
     private String from;
 
     private String message;
 
-    public ResponseJsonContract(
-            String from,
-            String message
-    ) {
-        this.from = from;
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
         this.message = message;
     }
 
@@ -26,17 +34,9 @@ public class ResponseJsonContract {
         this.from = from;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
     @Override
     public String toString() {
-        return "ResponseJsonContract{" +
+        return "DataContract{" +
                 "from='" + from + '\'' +
                 ", message='" + message + '\'' +
                 '}';

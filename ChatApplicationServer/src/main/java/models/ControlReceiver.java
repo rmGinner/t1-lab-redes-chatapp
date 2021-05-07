@@ -6,22 +6,22 @@ import java.net.InetAddress;
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
 
-public class CommandReceiver {
+public class ControlReceiver {
 
     private InetAddress address;
 
     private int port;
 
-    private String command;
+    private String control;
 
-    public CommandReceiver() {
+    public ControlReceiver() {
 
     }
 
-    public CommandReceiver(InetAddress address, int port, String command) {
+    public ControlReceiver(InetAddress address, int port, String control) {
         this.address = address;
         this.port = port;
-        this.command = command;
+        this.control = control;
     }
 
     public InetAddress getAddress() {
@@ -40,12 +40,12 @@ public class CommandReceiver {
         this.port = port;
     }
 
-    public String getCommand() {
-        return command;
+    public String getControl() {
+        return control;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    public void setControl(String control) {
+        this.control = control;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class CommandReceiver {
         return "UdpDataReceiver{" +
                 "address=" + address +
                 ", port=" + port +
-                ", command='" + command + '\'' +
+                ", control='" + control + '\'' +
                 '}';
     }
 }

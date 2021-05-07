@@ -6,7 +6,7 @@ import java.util.List;
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
 
-public class DataContract {
+public class RequestDataContract {
 
     private String from;
 
@@ -40,8 +40,9 @@ public class DataContract {
 
     @Override
     public String toString() {
-        return "ClientJsonContract{" +
-                "to=" + to +
+        return "DataContract{" +
+                "from='" + from + '\'' +
+                ", to=" + to +
                 ", message='" + message + '\'' +
                 '}';
     }

@@ -14,13 +14,7 @@ public class Utils {
     }
 
     public static <T> String toJson(T object) {
-        try {
-            return new Gson().toJson(object);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        return new Gson().toJson(object);
     }
 
     public static <T> T parseJson(String json, Class<T> clazz) {
