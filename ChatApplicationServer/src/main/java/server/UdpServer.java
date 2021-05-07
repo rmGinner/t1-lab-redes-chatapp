@@ -33,15 +33,13 @@ public class UdpServer {
 
     public void start() throws IOException {
         this.dataChannel = new DatagramSocket(DATA_CHANNEL_PORT);
+        this.dataChannel.setBroadcast(true);
+
         this.controlChannel = new DatagramSocket(CONTROL_CHANNEL_PORT);
     }
 
     public boolean isOpened() {
         return !this.dataChannel.isClosed();
-    }
-
-    public void stop() {
-        this.dataChannel.close();
     }
 
     public UdpDataReceiver receiveData() throws IOException {
@@ -73,6 +71,7 @@ public class UdpServer {
             @Override
             public void run() {
                 if (user.getDuration().toSeconds() > 0) {
+                    System.out.println(user.getDuration().toSeconds());
                     user.setDuration(Duration.ofSeconds(user.getDuration().toSeconds() - 1));
                 } else {
                     this.cancel();
@@ -81,8 +80,13 @@ public class UdpServer {
         }, 0, 1000);
     }
 
-    public void sendData(String data, InetAddress address, int port) throws IOException {
+    public void sendBroadCastData(String data) throws IOException {
         byte[] sendData = data.getBytes();
-        dataChannel.send(new DatagramPacket(sendData, sendData.length, address, port));
+        dataChannel.send(new DatagramPacket(sendData, sendData.length, InetAddress.getByName("191.255.255.255"), DATA_CHANNEL_PORT));
+    }
+
+    public void responseControlRequest(String responseText, InetAddress address, int port) throws IOException {
+        byte[] sendData = responseText.getBytes();
+        controlChannel.send(new DatagramPacket(sendData, sendData.length, address, port));
     }
 }

@@ -13,10 +13,7 @@ import utils.Utils;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 
 public class ChatServerImplementation {
@@ -27,13 +24,15 @@ public class ChatServerImplementation {
         this.udpServer = udpServer;
     }
 
+    private Timer timer = new Timer();
+
     public void createChatCommunication() throws IOException {
         createDataReceiverListener();
         createControlReceiverListener();
     }
 
     private boolean isInSession(UdpDataReceiver udpDataReceiver, RegisteredUser user) {
-        return user.getDuration().toSeconds() > 0 &
+        return Objects.nonNull(user) && user.getDuration().toSeconds() > 0 &
                 udpDataReceiver.getAddress().equals(user.getAddress()) &&
                 udpDataReceiver.getPort() == user.getPort();
     }
@@ -48,13 +47,12 @@ public class ChatServerImplementation {
                     try {
                         final var responseJsonContract = new ResponseDataContract(
                                 user.getNickName(),
-                                requestDataContract.getMessage()
+                                requestDataContract.getMessage(),
+                                dest
                         );
 
-                        udpServer.sendData(
-                                Utils.toJson(responseJsonContract),
-                                registeredUser.getAddress(),
-                                registeredUser.getPort()
+                        udpServer.sendBroadCastData(
+                                Utils.toJson(responseJsonContract)
                         );
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -64,8 +62,8 @@ public class ChatServerImplementation {
         }
     }
 
-    private RegisteredUser getRegisteredUser(RequestDataContract requestDataContract, InetAddress address, int port) {
-        return registeredUsers.get(requestDataContract.getFrom());
+    private RegisteredUser getRegisteredUser(String nickName) {
+        return registeredUsers.get(nickName);
     }
 
     private void registerUser(String nickName, InetAddress address, int port) throws IOException {
@@ -80,8 +78,7 @@ public class ChatServerImplementation {
 
         var jsonResponse = Utils.toJson(new ResponseControlContract("Usuário criado", true));
 
-        udpServer.sendData(jsonResponse, address, port);
-
+        udpServer.responseControlRequest(jsonResponse, address, port);
     }
 
     private void createDataReceiverListener() {
@@ -92,7 +89,7 @@ public class ChatServerImplementation {
                     RequestDataContract requestDataContract = Utils.parseJson(udpDataReceiver.getData(), RequestDataContract.class);
 
                     if (Objects.nonNull(requestDataContract)) {
-                        var user = getRegisteredUser(requestDataContract, udpDataReceiver.getAddress(), udpDataReceiver.getPort());
+                        var user = getRegisteredUser(requestDataContract.getFrom());
 
                         if (isInSession(udpDataReceiver, user)) {
                             sendMessageToDestinations(user, requestDataContract);
@@ -112,6 +109,7 @@ public class ChatServerImplementation {
             try {
                 while (this.udpServer.isOpened()) {
                     ControlReceiver udpControlReceiver = udpServer.receiveControl();
+                    System.out.println(udpControlReceiver.getControl());
                     RequestControlContract requestControlContract = Utils.parseJson(udpControlReceiver.getControl(), RequestControlContract.class);
 
                     if (Objects.nonNull(requestControlContract) &&
@@ -122,10 +120,10 @@ public class ChatServerImplementation {
                             executeControlBy(requestControlContract, udpControlReceiver);
                         } catch (IllegalArgumentException illException) {
                             final var jsonResponse = Utils.toJson(new ResponseControlContract(illException.getMessage(), false));
-                            udpServer.sendData(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
+                            udpServer.responseControlRequest(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
                         } catch (IOException e) {
                             final var jsonResponse = Utils.toJson(new ResponseControlContract("Ocorreu um erro inesperado. Tente novamente", false));
-                            udpServer.sendData(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
+                            udpServer.responseControlRequest(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
                         }
                     }
                 }
@@ -141,14 +139,24 @@ public class ChatServerImplementation {
         requestControlContract.setControl(requestControlContract.getControl().trim());
 
         switch (requestControlContract.getControl().toUpperCase()) {
-            case "REGISTER_USER" -> registerUser(requestControlContract.getControlArgument(), controlReceiver.getAddress(), controlReceiver.getPort());
+            case "REGISTER_USER" -> {
+                if (!registeredUsers.containsKey(requestControlContract.getControlArgument())) {
+                    registerUser(requestControlContract.getControlArgument(), controlReceiver.getAddress(), controlReceiver.getPort());
+                } else if (registeredUsers.get(requestControlContract.getControlArgument()).getDuration().toSeconds() > 0) {
+                    udpServer.responseControlRequest(Utils.toJson(new ResponseControlContract("Usuário já está cadastrado", true)), controlReceiver.getAddress(), controlReceiver.getPort());
+                } else {
+                    registeredUsers.remove(requestControlContract.getControlArgument());
+                    udpServer.responseControlRequest(Utils.toJson(new ResponseControlContract("Seu tempo de sessão esgotou. Realize novamente o login.", false)), controlReceiver.getAddress(), controlReceiver.getPort());
+                }
+            }
             case "KEEP_ALIVE" -> keepAlive(requestControlContract.getControlArgument());
             default -> throw new IllegalArgumentException("Controle inválido");
         }
     }
 
     private void keepAlive(String nickName) {
-        if (Objects.nonNull(this.registeredUsers.get(nickName))) {
+        final var registeredUser = this.registeredUsers.get(nickName);
+        if (Objects.nonNull(registeredUser)) {
             this.registeredUsers.get(nickName).setDuration(Duration.ofSeconds(20));
         }
     }

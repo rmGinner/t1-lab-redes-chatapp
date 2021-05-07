@@ -6,17 +6,33 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ResponseJsonContract {
+public class ResponseDataContract {
+
+    private String to;
 
     private String from;
 
     private String message;
 
-    public ResponseJsonContract(
+    public ResponseDataContract() {
+
+    }
+
+    public ResponseDataContract(
             String from,
-            String message
+            String message,
+            String to
     ) {
         this.from = from;
+        this.message = message;
+        this.to = to;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
         this.message = message;
     }
 
@@ -28,18 +44,19 @@ public class ResponseJsonContract {
         this.from = from;
     }
 
-    public String getMessage() {
-        return message;
+    public String getTo() {
+        return to;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setTo(String to) {
+        this.to = to;
     }
 
     @Override
     public String toString() {
-        return "ResponseJsonContract{" +
-                "from='" + from + '\'' +
+        return "ResponseDataContract{" +
+                "to='" + to + '\'' +
+                ", from='" + from + '\'' +
                 ", message='" + message + '\'' +
                 '}';
     }

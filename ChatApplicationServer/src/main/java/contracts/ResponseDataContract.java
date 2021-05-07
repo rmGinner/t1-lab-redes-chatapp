@@ -6,17 +6,21 @@ package contracts;
 
 public class ResponseDataContract {
 
-    public ResponseDataContract(
-            String from,
-            String message
-    ) {
-        this.from = from;
-        this.message = message;
-    }
+    private String to;
 
     private String from;
 
     private String message;
+
+    public ResponseDataContract(
+            String from,
+            String message,
+            String to
+    ) {
+        this.from = from;
+        this.message = message;
+        this.to = to;
+    }
 
     public String getMessage() {
         return message;
@@ -34,10 +38,19 @@ public class ResponseDataContract {
         this.from = from;
     }
 
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
+    }
+
     @Override
     public String toString() {
-        return "DataContract{" +
-                "from='" + from + '\'' +
+        return "ResponseDataContract{" +
+                "to='" + to + '\'' +
+                ", from='" + from + '\'' +
                 ", message='" + message + '\'' +
                 '}';
     }
