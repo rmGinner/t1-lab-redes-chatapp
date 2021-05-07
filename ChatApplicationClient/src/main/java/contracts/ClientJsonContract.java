@@ -16,6 +16,8 @@ public class ClientJsonContract {
 
     private Boolean subscribe;
 
+    private Boolean unSubscribe;
+
     public List<String> getTo() {
         return to;
     }
@@ -32,12 +34,12 @@ public class ClientJsonContract {
         this.message = message;
     }
 
-    public Boolean getSubscribe() {
-        return subscribe;
+    public void subscribe() {
+        this.subscribe = true;
     }
 
-    public void setSubscribe(Boolean subscribe) {
-        this.subscribe = subscribe;
+    public void unSubscribe() {
+        this.unSubscribe = true;
     }
 
     public String getFrom() {

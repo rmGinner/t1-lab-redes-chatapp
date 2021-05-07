@@ -64,11 +64,11 @@ public class ChatServerImplementation {
         }
     }
 
-    private RegisteredUser getRegisteredUser(RequestDataContract requestDataContract) {
+    private RegisteredUser getRegisteredUser(RequestDataContract requestDataContract, InetAddress address, int port) {
         return registeredUsers.get(requestDataContract.getFrom());
     }
 
-    private void registerUser(String nickName, InetAddress address, int port) {
+    private void registerUser(String nickName, InetAddress address, int port) throws IOException {
         RegisteredUser registeredUser = new RegisteredUser();
         registeredUser.setId(UUID.randomUUID().toString());
         registeredUser.setNickName(nickName);
@@ -77,6 +77,11 @@ public class ChatServerImplementation {
 
         registeredUsers.put(registeredUser.getNickName(), registeredUser);
         udpServer.createUserSession(registeredUser);
+
+        var jsonResponse = Utils.toJson(new ResponseControlContract("Usuário criado", true));
+
+        udpServer.sendData(jsonResponse, address, port);
+
     }
 
     private void createDataReceiverListener() {
@@ -87,7 +92,7 @@ public class ChatServerImplementation {
                     RequestDataContract requestDataContract = Utils.parseJson(udpDataReceiver.getData(), RequestDataContract.class);
 
                     if (Objects.nonNull(requestDataContract)) {
-                        var user = getRegisteredUser(requestDataContract);
+                        var user = getRegisteredUser(requestDataContract, udpDataReceiver.getAddress(), udpDataReceiver.getPort());
 
                         if (isInSession(udpDataReceiver, user)) {
                             sendMessageToDestinations(user, requestDataContract);
@@ -113,21 +118,15 @@ public class ChatServerImplementation {
                             Objects.nonNull(requestControlContract.getControl()) &&
                             !requestControlContract.getControl().isBlank()
                     ) {
-
-                        final var sentAddress = udpControlReceiver.getAddress();
-                        final var sentPort = udpControlReceiver.getPort();
-
-                        String jsonResponse = "{}";
-
                         try {
                             executeControlBy(requestControlContract, udpControlReceiver);
-
-                            jsonResponse = Utils.toJson(new ResponseControlContract("Usuário criado", true));
                         } catch (IllegalArgumentException illException) {
-                            jsonResponse = Utils.toJson(new ResponseControlContract(illException.getMessage(), false));
+                            final var jsonResponse = Utils.toJson(new ResponseControlContract(illException.getMessage(), false));
+                            udpServer.sendData(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
+                        } catch (IOException e) {
+                            final var jsonResponse = Utils.toJson(new ResponseControlContract("Ocorreu um erro inesperado. Tente novamente", false));
+                            udpServer.sendData(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
                         }
-
-                        udpServer.sendData(jsonResponse, sentAddress, sentPort);
                     }
                 }
             } catch (IOException ioException) {
@@ -138,7 +137,7 @@ public class ChatServerImplementation {
         new Thread(commandReceiverTask).start();
     }
 
-    private void executeControlBy(RequestControlContract requestControlContract, ControlReceiver controlReceiver) throws IllegalArgumentException {
+    private void executeControlBy(RequestControlContract requestControlContract, ControlReceiver controlReceiver) throws IllegalArgumentException, IOException {
         requestControlContract.setControl(requestControlContract.getControl().trim());
 
         switch (requestControlContract.getControl().toUpperCase()) {
