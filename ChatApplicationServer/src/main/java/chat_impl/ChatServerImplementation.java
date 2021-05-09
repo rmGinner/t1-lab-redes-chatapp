@@ -39,7 +39,6 @@ public class ChatServerImplementation {
 
     private void sendMessageToDestinations(RegisteredUser user, RequestDataContract requestDataContract) throws IOException {
         if (requestDataContract != null) {
-            System.out.println("VENHO aqui");
             final var responseJsonContract = new ResponseDataContract(
                     user.getNickName(),
                     requestDataContract.getMessage(),
@@ -86,9 +85,6 @@ public class ChatServerImplementation {
                 while (this.udpServer.isOpened()) {
                     UdpDataReceiver udpDataReceiver = udpServer.receiveData();
                     RequestDataContract requestDataContract = Utils.parseJson(udpDataReceiver.getData(), RequestDataContract.class);
-
-                    System.out.println(udpDataReceiver.getData());
-                    System.out.println(requestDataContract);
 
                     if (Objects.nonNull(requestDataContract)) {
                         var user = getRegisteredUser(requestDataContract.getFrom());
