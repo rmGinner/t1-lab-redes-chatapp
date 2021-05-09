@@ -16,6 +16,10 @@ public class RequestDataContract {
 
     }
 
+    public RequestDataContract(String message) {
+        this.message = message;
+    }
+
     public RequestDataContract(String from, String message) {
         this.from = from;
         this.message = message;
