@@ -1,7 +1,5 @@
 package contracts;
 
-import java.util.List;
-
 /**
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
@@ -10,7 +8,7 @@ public class RequestDataContract {
 
     private String from;
 
-    private List<String> to;
+    private String to;
 
     private String message;
 
@@ -18,17 +16,22 @@ public class RequestDataContract {
 
     }
 
-    public RequestDataContract(String from, String message, List<String> to) {
+    public RequestDataContract(String from, String message) {
+        this.from = from;
+        this.message = message;
+    }
+
+    public RequestDataContract(String from, String message, String to) {
         this.from = from;
         this.message = message;
         this.to = to;
     }
 
-    public List<String> getTo() {
+    public String getTo() {
         return to;
     }
 
-    public void setTo(List<String> to) {
+    public void setTo(String to) {
         this.to = to;
     }
 

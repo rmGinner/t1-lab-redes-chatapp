@@ -1,11 +1,8 @@
 package contracts;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 /**
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ResponseDataContract {
 
     private String to;

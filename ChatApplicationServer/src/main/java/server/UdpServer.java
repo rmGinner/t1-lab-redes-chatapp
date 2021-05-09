@@ -1,16 +1,13 @@
 package server;
 
 import models.ControlReceiver;
-import models.RegisteredUser;
 import models.UdpDataReceiver;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.time.Duration;
 import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
@@ -26,6 +23,10 @@ public class UdpServer {
 
     private static final Integer CONTROL_CHANNEL_PORT = 4391;
 
+    private static final String MULTICAST_ADDRESS = "230.0.0.0";
+
+    private static final Integer MULTICAST_PORT = 5555;
+
     private Timer timer = new Timer();
 
     public UdpServer() {
@@ -33,8 +34,6 @@ public class UdpServer {
 
     public void start() throws IOException {
         this.dataChannel = new DatagramSocket(DATA_CHANNEL_PORT);
-        this.dataChannel.setBroadcast(true);
-
         this.controlChannel = new DatagramSocket(CONTROL_CHANNEL_PORT);
     }
 
@@ -66,27 +65,18 @@ public class UdpServer {
         );
     }
 
-    public void createUserSession(RegisteredUser user) {
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (user.getDuration().toSeconds() > 0) {
-                    System.out.println(user.getDuration().toSeconds());
-                    user.setDuration(Duration.ofSeconds(user.getDuration().toSeconds() - 1));
-                } else {
-                    this.cancel();
-                }
-            }
-        }, 0, 1000);
-    }
-
-    public void sendBroadCastData(String data) throws IOException {
+    public void sendUnicastData(String data, InetAddress address, int port) throws IOException {
         byte[] sendData = data.getBytes();
-        dataChannel.send(new DatagramPacket(sendData, sendData.length, InetAddress.getByName("191.255.255.255"), DATA_CHANNEL_PORT));
+        dataChannel.send(new DatagramPacket(sendData, sendData.length, address, port));
     }
 
-    public void responseControlRequest(String responseText, InetAddress address, int port) throws IOException {
+    public void responseControlRequestUnicast(String responseText, InetAddress address, int port) throws IOException {
         byte[] sendData = responseText.getBytes();
         controlChannel.send(new DatagramPacket(sendData, sendData.length, address, port));
+    }
+
+    public void responseControlRequestBroadcast(String responseText) throws IOException {
+        byte[] sendData = responseText.getBytes();
+        controlChannel.send(new DatagramPacket(sendData, sendData.length, InetAddress.getByName(MULTICAST_ADDRESS), MULTICAST_PORT));
     }
 }

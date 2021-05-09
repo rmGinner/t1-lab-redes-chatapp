@@ -20,11 +20,11 @@ public class ChatServerImplementation {
     private final UdpServer udpServer;
     private final Map<String, RegisteredUser> registeredUsers = new HashMap<>();
 
+    private Timer timer = new Timer();
+
     public ChatServerImplementation(UdpServer udpServer) {
         this.udpServer = udpServer;
     }
-
-    private Timer timer = new Timer();
 
     public void createChatCommunication() throws IOException {
         createDataReceiverListener();
@@ -37,29 +37,18 @@ public class ChatServerImplementation {
                 udpDataReceiver.getPort() == user.getPort();
     }
 
-    private void sendMessageToDestinations(RegisteredUser user, RequestDataContract requestDataContract) {
+    private void sendMessageToDestinations(RegisteredUser user, RequestDataContract requestDataContract) throws IOException {
         if (requestDataContract != null) {
-            requestDataContract.getTo().forEach(dest -> {
-                final var sanitizedDest = Utils.sanitizeNickName(dest);
-                final var registeredUser = sanitizedDest != null ? registeredUsers.get(sanitizedDest) : null;
+            System.out.println("VENHO aqui");
+            final var responseJsonContract = new ResponseDataContract(
+                    user.getNickName(),
+                    requestDataContract.getMessage(),
+                    requestDataContract.getTo()
+            );
 
-                if (registeredUser != null) {
-                    try {
-                        final var responseJsonContract = new ResponseDataContract(
-                                user.getNickName(),
-                                requestDataContract.getMessage(),
-                                dest
-                        );
-
-                        udpServer.sendBroadCastData(
-                                Utils.toJson(responseJsonContract)
-                        );
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            udpServer.responseControlRequestBroadcast(Utils.toJson(responseJsonContract));
         }
+
     }
 
     private RegisteredUser getRegisteredUser(String nickName) {
@@ -74,11 +63,21 @@ public class ChatServerImplementation {
         registeredUser.setPort(port);
 
         registeredUsers.put(registeredUser.getNickName(), registeredUser);
-        udpServer.createUserSession(registeredUser);
+        createUserSession(registeredUser);
 
         var jsonResponse = Utils.toJson(new ResponseControlContract("Usuário criado", true));
 
-        udpServer.responseControlRequest(jsonResponse, address, port);
+        udpServer.responseControlRequestUnicast(jsonResponse, address, port);
+
+        try {
+            udpServer.responseControlRequestBroadcast(
+                    Utils.toJson(
+                            new ResponseControlContract("O usuário " + nickName + " entrou na sala.", false)
+                    )
+            );
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
     }
 
     private void createDataReceiverListener() {
@@ -87,6 +86,9 @@ public class ChatServerImplementation {
                 while (this.udpServer.isOpened()) {
                     UdpDataReceiver udpDataReceiver = udpServer.receiveData();
                     RequestDataContract requestDataContract = Utils.parseJson(udpDataReceiver.getData(), RequestDataContract.class);
+
+                    System.out.println(udpDataReceiver.getData());
+                    System.out.println(requestDataContract);
 
                     if (Objects.nonNull(requestDataContract)) {
                         var user = getRegisteredUser(requestDataContract.getFrom());
@@ -109,7 +111,6 @@ public class ChatServerImplementation {
             try {
                 while (this.udpServer.isOpened()) {
                     ControlReceiver udpControlReceiver = udpServer.receiveControl();
-                    System.out.println(udpControlReceiver.getControl());
                     RequestControlContract requestControlContract = Utils.parseJson(udpControlReceiver.getControl(), RequestControlContract.class);
 
                     if (Objects.nonNull(requestControlContract) &&
@@ -120,10 +121,10 @@ public class ChatServerImplementation {
                             executeControlBy(requestControlContract, udpControlReceiver);
                         } catch (IllegalArgumentException illException) {
                             final var jsonResponse = Utils.toJson(new ResponseControlContract(illException.getMessage(), false));
-                            udpServer.responseControlRequest(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
+                            udpServer.responseControlRequestUnicast(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
                         } catch (IOException e) {
                             final var jsonResponse = Utils.toJson(new ResponseControlContract("Ocorreu um erro inesperado. Tente novamente", false));
-                            udpServer.responseControlRequest(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
+                            udpServer.responseControlRequestUnicast(jsonResponse, udpControlReceiver.getAddress(), udpControlReceiver.getPort());
                         }
                     }
                 }
@@ -143,10 +144,10 @@ public class ChatServerImplementation {
                 if (!registeredUsers.containsKey(requestControlContract.getControlArgument())) {
                     registerUser(requestControlContract.getControlArgument(), controlReceiver.getAddress(), controlReceiver.getPort());
                 } else if (registeredUsers.get(requestControlContract.getControlArgument()).getDuration().toSeconds() > 0) {
-                    udpServer.responseControlRequest(Utils.toJson(new ResponseControlContract("Usuário já está cadastrado", true)), controlReceiver.getAddress(), controlReceiver.getPort());
+                    udpServer.responseControlRequestUnicast(Utils.toJson(new ResponseControlContract("Usuário já está cadastrado", true)), controlReceiver.getAddress(), controlReceiver.getPort());
                 } else {
                     registeredUsers.remove(requestControlContract.getControlArgument());
-                    udpServer.responseControlRequest(Utils.toJson(new ResponseControlContract("Seu tempo de sessão esgotou. Realize novamente o login.", false)), controlReceiver.getAddress(), controlReceiver.getPort());
+                    udpServer.responseControlRequestUnicast(Utils.toJson(new ResponseControlContract("Seu tempo de sessão esgotou. Realize novamente o login.", false)), controlReceiver.getAddress(), controlReceiver.getPort());
                 }
             }
             case "KEEP_ALIVE" -> keepAlive(requestControlContract.getControlArgument());
@@ -159,6 +160,31 @@ public class ChatServerImplementation {
         if (Objects.nonNull(registeredUser)) {
             this.registeredUsers.get(nickName).setDuration(Duration.ofSeconds(20));
         }
+    }
+
+    private void createUserSession(RegisteredUser user) {
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (user.getDuration().toSeconds() > 0) {
+                    user.setDuration(Duration.ofSeconds(user.getDuration().toSeconds() - 1));
+                } else {
+                    try {
+                        udpServer.responseControlRequestBroadcast(
+                                Utils.toJson(
+                                        new ResponseControlContract("O usuário " + user.getNickName() + " foi desconectado da sala.", false)
+                                )
+                        );
+                    } catch (IOException ioException) {
+                        System.out.println("Erro genérico ao enviar dados para o cliente.");
+                    }
+
+                    registeredUsers.remove(user.getNickName());
+
+                    this.cancel();
+                }
+            }
+        }, 0, 1000);
     }
 
 }
