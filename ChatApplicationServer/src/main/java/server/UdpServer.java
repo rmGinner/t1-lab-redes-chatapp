@@ -43,7 +43,7 @@ public class UdpServer {
 
     public UdpDataReceiver receiveData() throws IOException {
         byte[] receiveData = new byte[50000];
-        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(), DATA_CHANNEL_PORT);
+        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(  ), DATA_CHANNEL_PORT);
         dataChannel.receive(receivePacket);
 
         return new UdpDataReceiver(

@@ -147,8 +147,13 @@ public class ChatServerImplementation {
                 }
             }
             case "KEEP_ALIVE" -> keepAlive(requestControlContract.getControlArgument());
+            case "EXIT_USER" -> exitUser(requestControlContract.getControlArgument());
             default -> throw new IllegalArgumentException("Controle inválido");
         }
+    }
+
+    private void exitUser(String controlArgument) {
+        this.registeredUsers.remove(controlArgument);
     }
 
     private void keepAlive(String nickName) {
@@ -159,6 +164,7 @@ public class ChatServerImplementation {
     }
 
     private void createUserSession(RegisteredUser user) {
+        timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {

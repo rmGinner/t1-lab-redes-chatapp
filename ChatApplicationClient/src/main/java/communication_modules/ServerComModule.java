@@ -34,6 +34,8 @@ public class ServerComModule {
 
     private static final String KEEP_ALIVE_CONTROL = "KEEP_ALIVE";
 
+    private static final String EXIT_USER_CONTROL = "EXIT_USER";
+
     private static final int DATA_CHANNEL_PORT = 4390;
 
     private static final int CONTROL_CHANNEL_PORT = 4391;
@@ -59,14 +61,14 @@ public class ServerComModule {
 
         this.nickName = nickName;
 
-        sendControlToServer(datagramSocket, controlContract);
+        sendControlToServer(controlContract);
     }
 
     public boolean hasUser() {
         return Objects.nonNull(nickName);
     }
 
-    private void sendControlToServer(DatagramSocket datagramSocket, RequestControlContract requestControlContract) throws IOException {
+    private void sendControlToServer(RequestControlContract requestControlContract) throws IOException {
         String jsonAsString = new GsonBuilder().setPrettyPrinting().setLenient().create().toJson(requestControlContract);
         byte[] sendData = jsonAsString.getBytes();
 
@@ -82,6 +84,17 @@ public class ServerComModule {
         datagramSocket.send(new DatagramPacket(sendData, sendData.length, InetAddress.getLoopbackAddress(), DATA_CHANNEL_PORT));
     }
 
+    public void exitUser() throws IOException {
+        final var requestControlContract = new RequestControlContract(EXIT_USER_CONTROL, this.nickName);
+        this.sendControlToServer(requestControlContract);
+
+        this.nickName = null;
+    }
+
+    public String getUser() {
+        return this.nickName;
+    }
+
     private void createMessageListener() {
         Runnable runnable = () -> {
             while (true) {
@@ -91,11 +104,14 @@ public class ServerComModule {
 
                     if (Objects.nonNull(responseControlContract) && Objects.nonNull(responseControlContract.getMessage())) {
                         if (responseControlContract.isSuccess()) {
-                            keepAlive(datagramSocket);
+                            keepAlive();
                             System.out.println(responseControlContract.getMessage());
                         } else {
                             nickName = null;
-                            timer.cancel();
+
+                            if (Objects.nonNull(timer)) {
+                                timer.cancel();
+                            }
                         }
                     }
                 } catch (IOException ioException) {
@@ -104,7 +120,12 @@ public class ServerComModule {
             }
         };
 
-        new Thread(runnable).start();
+        new
+
+                Thread(runnable).
+
+                start();
+
     }
 
     private void createBroadcastMessageListener() {
@@ -116,11 +137,7 @@ public class ServerComModule {
                     ResponseDataContract responseDataContract = Utils.parseJson(receivedJson, ResponseDataContract.class);
 
                     if (Objects.nonNull(responseDataContract)) {
-                        if (Objects.nonNull(responseDataContract.getTo())) {
-                            System.out.printf("\n\n %s escreveu para %s: %s \n\n", responseDataContract.getFrom(), responseDataContract.getTo(), responseDataContract.getMessage());
-                        } else {
-                            System.out.printf("\n\n %s escreveu para TODOS: %s \n\n", responseDataContract.getFrom(), responseDataContract.getMessage());
-                        }
+                        System.out.println(responseDataContract.getMessage());
                     } else {
                         ResponseControlContract responseControlContract = Utils.parseJson(receivedJson, ResponseControlContract.class);
 
@@ -151,14 +168,14 @@ public class ServerComModule {
         return new String(packet.getData());
     }
 
-    private void keepAlive(DatagramSocket datagramSocket) {
+    private void keepAlive() {
         Runnable runnable = () -> {
             timer = new Timer();
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     try {
-                        sendControlToServer(datagramSocket, new RequestControlContract(KEEP_ALIVE_CONTROL, nickName));
+                        sendControlToServer(new RequestControlContract(KEEP_ALIVE_CONTROL, nickName));
                     } catch (IOException ioException) {
                         System.out.println("Keep alive --- Erro na comunicação com o servidor!!");
                     }
