@@ -1,9 +1,10 @@
 package contracts;
 
 /**
+ * Contrato de dados para responder as mensagens enviadas pelos clientes.
+ *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
-
 public class ResponseDataContract {
 
     private String to;

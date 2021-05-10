@@ -1,9 +1,10 @@
 package contracts;
 
 /**
+ * Contrato de dados para receber controles do cliente
+ *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
-
 public class RequestControlContract {
 
     private String control;

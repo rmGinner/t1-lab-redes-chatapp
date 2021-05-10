@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Utils {
 
+    //Parse a class to a JSON.
     public static <T> T parseJson(String json, Class<T> clazz) {
         ObjectMapper objectMapper = new ObjectMapper();
 

@@ -1,7 +1,7 @@
 package server;
 
 import models.ControlReceiver;
-import models.UdpDataReceiver;
+import models.MessageReceiver;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -32,27 +32,31 @@ public class UdpServer {
     public UdpServer() {
     }
 
+    //Inicializa o servidor com as portas para dados e controles
     public void start() throws IOException {
         this.dataChannel = new DatagramSocket(DATA_CHANNEL_PORT);
         this.controlChannel = new DatagramSocket(CONTROL_CHANNEL_PORT);
     }
 
+    //Verifica se o servidor está inicializado.
     public boolean isOpened() {
         return !this.dataChannel.isClosed();
     }
 
-    public UdpDataReceiver receiveData() throws IOException {
+    //Recebe uma mensagem enviada pelo cliente.
+    public MessageReceiver receiveData() throws IOException {
         byte[] receiveData = new byte[50000];
         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(  ), DATA_CHANNEL_PORT);
         dataChannel.receive(receivePacket);
 
-        return new UdpDataReceiver(
+        return new MessageReceiver(
                 receivePacket.getAddress(),
                 receivePacket.getPort(),
                 new String(receivePacket.getData())
         );
     }
 
+    //Recebe um controle enviado pelo cliente.
     public ControlReceiver receiveControl() throws IOException {
         byte[] receiveData = new byte[50000];
         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length, InetAddress.getLoopbackAddress(), CONTROL_CHANNEL_PORT);
@@ -65,17 +69,14 @@ public class UdpServer {
         );
     }
 
-    public void sendUnicastData(String data, InetAddress address, int port) throws IOException {
-        byte[] sendData = data.getBytes();
-        dataChannel.send(new DatagramPacket(sendData, sendData.length, address, port));
-    }
-
+    //Responde à uma solicitação de controle enviado pelo cliente
     public void responseControlRequestUnicast(String responseText, InetAddress address, int port) throws IOException {
         byte[] sendData = responseText.getBytes();
         controlChannel.send(new DatagramPacket(sendData, sendData.length, address, port));
     }
 
-    public void responseControlRequestBroadcast(String responseText) throws IOException {
+    //Responde à uma solicitação de controle em broadcast enviado pelo cliente
+    public void responseMessageControlRequestBroadcast(String responseText) throws IOException {
         byte[] sendData = responseText.getBytes();
         controlChannel.send(new DatagramPacket(sendData, sendData.length, InetAddress.getByName(MULTICAST_ADDRESS), MULTICAST_PORT));
     }

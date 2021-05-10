@@ -6,7 +6,7 @@ import contracts.ResponseControlContract;
 import contracts.ResponseDataContract;
 import models.ControlReceiver;
 import models.RegisteredUser;
-import models.UdpDataReceiver;
+import models.MessageReceiver;
 import server.UdpServer;
 import utils.Utils;
 
@@ -15,28 +15,31 @@ import java.net.InetAddress;
 import java.time.Duration;
 import java.util.*;
 
-
+/**
+ * Implementação concreta do chat.
+ */
 public class ChatServerImplementation {
     private final UdpServer udpServer;
     private final Map<String, RegisteredUser> registeredUsers = new HashMap<>();
-
-    private Timer timer = new Timer();
 
     public ChatServerImplementation(UdpServer udpServer) {
         this.udpServer = udpServer;
     }
 
+    //Cria os listeners para os dados e controles enviados do cliente.
     public void createChatCommunication() throws IOException {
-        createDataReceiverListener();
+        createMessageReceiverListener();
         createControlReceiverListener();
     }
 
-    private boolean isInSession(UdpDataReceiver udpDataReceiver, RegisteredUser user) {
+    //Verifica se um determinado usuário está cadastrado no chat
+    private boolean isInSession(MessageReceiver messageReceiver, RegisteredUser user) {
         return Objects.nonNull(user) && user.getDuration().toSeconds() > 0 &
-                udpDataReceiver.getAddress().equals(user.getAddress()) &&
-                udpDataReceiver.getPort() == user.getPort();
+                messageReceiver.getAddress().equals(user.getAddress()) &&
+                messageReceiver.getPort() == user.getPort();
     }
 
+    //Envia uma mensagem em broadcast para os destinos
     private void sendMessageToDestinations(RegisteredUser user, RequestDataContract requestDataContract) throws IOException {
         if (requestDataContract != null) {
             final var responseJsonContract = new ResponseDataContract(
@@ -45,18 +48,19 @@ public class ChatServerImplementation {
                     requestDataContract.getTo()
             );
 
-            udpServer.responseControlRequestBroadcast(Utils.toJson(responseJsonContract));
+            udpServer.responseMessageControlRequestBroadcast(Utils.toJson(responseJsonContract));
         }
 
     }
 
+    //Busca um usuário cadastrado
     private RegisteredUser getRegisteredUser(String nickName) {
         return registeredUsers.get(nickName);
     }
 
+    //Cadastra um usuário no chat
     private void registerUser(String nickName, InetAddress address, int port) throws IOException {
         RegisteredUser registeredUser = new RegisteredUser();
-        registeredUser.setId(UUID.randomUUID().toString());
         registeredUser.setNickName(nickName);
         registeredUser.setAddress(address);
         registeredUser.setPort(port);
@@ -69,7 +73,7 @@ public class ChatServerImplementation {
         udpServer.responseControlRequestUnicast(jsonResponse, address, port);
 
         try {
-            udpServer.responseControlRequestBroadcast(
+            udpServer.responseMessageControlRequestBroadcast(
                     Utils.toJson(
                             new ResponseControlContract("O usuário " + nickName + " entrou na sala.", false)
                     )
@@ -79,17 +83,18 @@ public class ChatServerImplementation {
         }
     }
 
-    private void createDataReceiverListener() {
+    //Cria uma nova thread para ficar recebendo as mensagens enviadas pelo cliente e para repassar elas aos destinatários em broadcast.
+    private void createMessageReceiverListener() {
         Runnable dataReceiverTask = () -> {
             try {
                 while (this.udpServer.isOpened()) {
-                    UdpDataReceiver udpDataReceiver = udpServer.receiveData();
-                    RequestDataContract requestDataContract = Utils.parseJson(udpDataReceiver.getData(), RequestDataContract.class);
+                    MessageReceiver messageReceiver = udpServer.receiveData();
+                    RequestDataContract requestDataContract = Utils.parseJson(messageReceiver.getData(), RequestDataContract.class);
 
                     if (Objects.nonNull(requestDataContract)) {
                         var user = getRegisteredUser(requestDataContract.getFrom());
 
-                        if (isInSession(udpDataReceiver, user)) {
+                        if (isInSession(messageReceiver, user)) {
                             sendMessageToDestinations(user, requestDataContract);
                         }
                     }
@@ -102,6 +107,7 @@ public class ChatServerImplementation {
         new Thread(dataReceiverTask).start();
     }
 
+    //Cria uma nova thread para ficar recebendo os controles enviados pelo cliente.
     private void createControlReceiverListener() {
         Runnable commandReceiverTask = () -> {
             try {
@@ -132,6 +138,7 @@ public class ChatServerImplementation {
         new Thread(commandReceiverTask).start();
     }
 
+    //Executa um controle de acordo com a solicitação do cliente.
     private void executeControlBy(RequestControlContract requestControlContract, ControlReceiver controlReceiver) throws IllegalArgumentException, IOException {
         requestControlContract.setControl(requestControlContract.getControl().trim());
 
@@ -164,7 +171,7 @@ public class ChatServerImplementation {
     }
 
     private void createUserSession(RegisteredUser user) {
-        timer = new Timer();
+        Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -172,7 +179,7 @@ public class ChatServerImplementation {
                     user.setDuration(Duration.ofSeconds(user.getDuration().toSeconds() - 1));
                 } else {
                     try {
-                        udpServer.responseControlRequestBroadcast(
+                        udpServer.responseMessageControlRequestBroadcast(
                                 Utils.toJson(
                                         new ResponseControlContract("O usuário " + user.getNickName() + " foi desconectado da sala.", false)
                                 )

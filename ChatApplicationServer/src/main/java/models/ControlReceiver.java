@@ -3,6 +3,8 @@ package models;
 import java.net.InetAddress;
 
 /**
+ * Receptor de controles, endereço do cliente e porta.
+ *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
 

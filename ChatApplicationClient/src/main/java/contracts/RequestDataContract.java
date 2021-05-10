@@ -1,9 +1,10 @@
 package contracts;
 
 /**
+ * Contrato de dados para enviar mensagens ao servidor.
+ *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
-
 public class RequestDataContract {
 
     private String from;

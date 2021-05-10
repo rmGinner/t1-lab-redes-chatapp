@@ -18,7 +18,7 @@ public class Main {
             final var sc = new Scanner(System.in);
             var command = sc.nextLine();
 
-            userComModule.delegateCommand(command);
+            userComModule.runCommand(command);
         }
     }
 

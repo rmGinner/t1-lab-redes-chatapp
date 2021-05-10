@@ -3,10 +3,11 @@ package models;
 import java.net.InetAddress;
 
 /**
+ * //Receptor de mensagens enviadas pelo cliente junto com a sua porta e seu endereço IP.
+ *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
-
-public class UdpDataReceiver {
+public class MessageReceiver {
 
     private InetAddress address;
 
@@ -14,11 +15,11 @@ public class UdpDataReceiver {
 
     private String data;
 
-    public UdpDataReceiver() {
+    public MessageReceiver() {
 
     }
 
-    public UdpDataReceiver(InetAddress address, int port, String data) {
+    public MessageReceiver(InetAddress address, int port, String data) {
         this.address = address;
         this.port = port;
         this.data = data;

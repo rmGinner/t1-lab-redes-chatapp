@@ -1,9 +1,10 @@
 package contracts;
 
 /**
+ * Contrato de dados para responder aos controles solicitados pelo cliente.
+ *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
-
 public class ResponseControlContract {
 
     private boolean success;

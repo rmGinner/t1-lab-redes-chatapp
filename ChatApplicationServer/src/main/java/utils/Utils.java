@@ -13,10 +13,12 @@ public class Utils {
 
     }
 
+    //Converte um objeto Java em um JSON
     public static <T> String toJson(T object) {
         return new Gson().toJson(object);
     }
 
+    //Converte um JSON em objeto Java
     public static <T> T parseJson(String json, Class<T> clazz) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -25,11 +27,5 @@ public class Utils {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    public static String sanitizeNickName(String nickName) {
-        return nickName != null ?
-                nickName.trim().toLowerCase() :
-                null;
     }
 }

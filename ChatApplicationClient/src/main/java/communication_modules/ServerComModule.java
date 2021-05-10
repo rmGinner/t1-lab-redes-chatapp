@@ -44,15 +44,17 @@ public class ServerComModule {
 
     private String nickName;
 
+    //Cria um socket UDP e UDP multicast
     public ServerComModule() throws IOException {
         this.datagramSocket = new DatagramSocket();
         this.multicastSocket = new MulticastSocket(MULTICAST_PORT);
         this.multicastSocket.joinGroup(InetAddress.getByName(MULTICAST_ADDRESS));
 
-        createMessageListener();
+        createControlListener();
         createBroadcastMessageListener();
     }
 
+    //Registra um usuário no chat
     public void registerUser(String nickName) throws IOException {
         final var controlContract = new RequestControlContract();
 
@@ -64,10 +66,12 @@ public class ServerComModule {
         sendControlToServer(controlContract);
     }
 
+    //Verifica se o usuário já registrou um nickname no chat
     public boolean hasUser() {
         return Objects.nonNull(nickName);
     }
 
+    //Envia um controle para o servidor
     private void sendControlToServer(RequestControlContract requestControlContract) throws IOException {
         String jsonAsString = new GsonBuilder().setPrettyPrinting().setLenient().create().toJson(requestControlContract);
         byte[] sendData = jsonAsString.getBytes();
@@ -75,6 +79,7 @@ public class ServerComModule {
         datagramSocket.send(new DatagramPacket(sendData, sendData.length, InetAddress.getLoopbackAddress(), CONTROL_CHANNEL_PORT));
     }
 
+    //Envia uma mensagem para o servidor
     public void sendMessage(String message, String toUser) throws IOException {
         var dataContract = new RequestDataContract(nickName, message, toUser);
 
@@ -84,6 +89,7 @@ public class ServerComModule {
         datagramSocket.send(new DatagramPacket(sendData, sendData.length, InetAddress.getLoopbackAddress(), DATA_CHANNEL_PORT));
     }
 
+    //Remove um usuário do chat
     public void exitUser() throws IOException {
         final var requestControlContract = new RequestControlContract(EXIT_USER_CONTROL, this.nickName);
         this.sendControlToServer(requestControlContract);
@@ -95,11 +101,12 @@ public class ServerComModule {
         return this.nickName;
     }
 
-    private void createMessageListener() {
+    //Cria uma nova thread que somente receberá os controles enviados pelo servidor ao cliente em unicast.
+    private void createControlListener() {
         Runnable runnable = () -> {
             while (true) {
                 try {
-                    String receivedJson = receiveMessageFromServer();
+                    String receivedJson = receiveControlFromServer();
                     ResponseControlContract responseControlContract = Utils.parseJson(receivedJson, ResponseControlContract.class);
 
                     if (Objects.nonNull(responseControlContract) && Objects.nonNull(responseControlContract.getMessage())) {
@@ -128,6 +135,7 @@ public class ServerComModule {
 
     }
 
+    //Cria uma nova thread que somente receberá as mensagens recebidas em broadcast do servidor e mostrará ao usuário.
     private void createBroadcastMessageListener() {
         Runnable runnable = () -> {
             while (true) {
@@ -154,13 +162,15 @@ public class ServerComModule {
         new Thread(runnable).start();
     }
 
-    private String receiveMessageFromServer() throws IOException {
+    //Recebe uma resposta de controle do servidor
+    private String receiveControlFromServer() throws IOException {
         byte[] receiveData = new byte[500000];
         final var packet = new DatagramPacket(receiveData, receiveData.length);
         datagramSocket.receive(packet);
         return new String(packet.getData());
     }
 
+    //Recebe uma mensagem broadcast do servidor
     private String receiveBroadcastMessageFromServer() throws IOException {
         byte[] receiveData = new byte[500000];
         final var packet = new DatagramPacket(receiveData, receiveData.length);
@@ -168,6 +178,7 @@ public class ServerComModule {
         return new String(packet.getData());
     }
 
+    //Cria uma nova thread para ficar enviando keep alive ao servidor.
     private void keepAlive() {
         Runnable runnable = () -> {
             timer = new Timer();

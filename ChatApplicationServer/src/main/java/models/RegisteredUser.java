@@ -4,12 +4,12 @@ import java.net.InetAddress;
 import java.time.Duration;
 
 /**
+ * Modelo de representação de um usuário cadastrado
+ *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
 
 public class RegisteredUser {
-
-    private String id;
 
     private String nickName;
 
@@ -21,14 +21,6 @@ public class RegisteredUser {
 
     public RegisteredUser() {
         this.duration = Duration.ofSeconds(20);
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getNickName() {
@@ -66,7 +58,6 @@ public class RegisteredUser {
     @Override
     public String toString() {
         return "RegisteredUser{" +
-                "id='" + id + '\'' +
                 ", nickName='" + nickName + '\'' +
                 ", duration=" + duration +
                 ", address=" + address +

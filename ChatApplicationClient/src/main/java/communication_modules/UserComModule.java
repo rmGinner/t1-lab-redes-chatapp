@@ -30,7 +30,8 @@ public class UserComModule {
         this.serverComModule = new ServerComModule();
     }
 
-    public void delegateCommand(
+    //Processa o comando solicitado
+    public void runCommand(
             String command
     ) throws IOException {
         if (Objects.isNull(command)) {
@@ -152,6 +153,7 @@ public class UserComModule {
         }
     }
 
+    //Mostra os comandos disponíveis para o usuário
     public void showOperations() {
         System.out.println("Operações: \n\n");
         System.out.printf("Entrar no chat: %s {nome do usuário} \n", USER_CMD_ENTER_IN_CHAT);
