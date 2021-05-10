@@ -5,8 +5,8 @@ import contracts.RequestDataContract;
 import contracts.ResponseControlContract;
 import contracts.ResponseDataContract;
 import models.ControlReceiver;
-import models.RegisteredUser;
 import models.MessageReceiver;
+import models.RegisteredUser;
 import server.UdpServer;
 import utils.Utils;
 
@@ -159,8 +159,13 @@ public class ChatServerImplementation {
         }
     }
 
-    private void exitUser(String controlArgument) {
+    private void exitUser(String controlArgument) throws IOException {
         this.registeredUsers.remove(controlArgument);
+        udpServer.responseMessageControlRequestBroadcast(
+                Utils.toJson(
+                        new ResponseControlContract("O usuário " + controlArgument + " foi desconectado da sala.", false)
+                )
+        );
     }
 
     private void keepAlive(String nickName) {
