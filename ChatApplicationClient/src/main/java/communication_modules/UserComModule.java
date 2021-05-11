@@ -71,12 +71,12 @@ public class UserComModule {
                 return;
             }
 
-            if (commandArguments.length != 2) {
+            if (commandArguments.length < 2) {
                 System.out.println("Parâmetros inválidos para o comando");
                 return;
             }
 
-            var message = commandArguments[1];
+            var message = String.join(" ", Arrays.asList(Arrays.copyOfRange(commandArguments, 1, commandArguments.length)));
 
             serverComModule.sendMessage(String.format("\n\n %s escreveu para TODOS: %s \n\n", serverComModule.getUser(), message), null);
         } else if (commandArguments[0].trim().equalsIgnoreCase(USER_CMD_PRIVATE_MESSAGE)) {
@@ -85,13 +85,13 @@ public class UserComModule {
                 return;
             }
 
-            if (commandArguments.length != 3) {
+            if (commandArguments.length < 3) {
                 System.out.println("Parâmetros inválidos para o comando.");
                 return;
             }
 
             var toUser = commandArguments[1];
-            var message = commandArguments[2];
+            var message = String.join(" ", Arrays.asList(Arrays.copyOfRange(commandArguments, 2, commandArguments.length)));
 
             serverComModule.sendMessage(String.format("\n\n %s escreveu para %s: %s \n\n", serverComModule.getUser(), toUser, message), toUser);
         } else if (commandArguments[0].trim().equalsIgnoreCase(USER_CMD_EXIT_CHAT)) {

@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder;
 import contracts.RequestControlContract;
 import contracts.RequestDataContract;
 import contracts.ResponseControlContract;
-import contracts.ResponseDataContract;
+import contracts.ResponseMessageContract;
 import utils.Utils;
 
 import java.io.IOException;
@@ -115,10 +115,6 @@ public class ServerComModule {
                             System.out.println(responseControlContract.getMessage());
                         } else {
                             nickName = null;
-
-                            if (Objects.nonNull(timer)) {
-                                timer.cancel();
-                            }
                         }
                     }
                 } catch (IOException ioException) {
@@ -127,11 +123,7 @@ public class ServerComModule {
             }
         };
 
-        new
-
-                Thread(runnable).
-
-                start();
+        new Thread(runnable).start();
 
     }
 
@@ -142,10 +134,10 @@ public class ServerComModule {
                 try {
                     String receivedJson = receiveBroadcastMessageFromServer();
 
-                    ResponseDataContract responseDataContract = Utils.parseJson(receivedJson, ResponseDataContract.class);
+                    ResponseMessageContract responseMessageContract = Utils.parseJson(receivedJson, ResponseMessageContract.class);
 
-                    if (Objects.nonNull(responseDataContract)) {
-                        System.out.println(responseDataContract.getMessage());
+                    if (Objects.nonNull(responseMessageContract)) {
+                        System.out.println(responseMessageContract.getMessage());
                     } else {
                         ResponseControlContract responseControlContract = Utils.parseJson(receivedJson, ResponseControlContract.class);
 

@@ -147,6 +147,9 @@ public class ChatServerImplementation {
                 if (!registeredUsers.containsKey(requestControlContract.getControlArgument())) {
                     registerUser(requestControlContract.getControlArgument(), controlReceiver.getAddress(), controlReceiver.getPort());
                 } else if (registeredUsers.get(requestControlContract.getControlArgument()).getDuration().toSeconds() > 0) {
+                    registeredUsers.get(requestControlContract.getControlArgument()).setAddress(controlReceiver.getAddress());
+                    registeredUsers.get(requestControlContract.getControlArgument()).setPort(controlReceiver.getPort());
+
                     udpServer.responseControlRequestUnicast(Utils.toJson(new ResponseControlContract("Usuário já está cadastrado", true)), controlReceiver.getAddress(), controlReceiver.getPort());
                 } else {
                     registeredUsers.remove(requestControlContract.getControlArgument());
@@ -171,6 +174,7 @@ public class ChatServerImplementation {
     private void keepAlive(String nickName) {
         final var registeredUser = this.registeredUsers.get(nickName);
         if (Objects.nonNull(registeredUser)) {
+            System.out.println("KEEP ALIVE PARA: " + registeredUser.getNickName());
             this.registeredUsers.get(nickName).setDuration(Duration.ofSeconds(20));
         }
     }
@@ -181,6 +185,8 @@ public class ChatServerImplementation {
             @Override
             public void run() {
                 if (user.getDuration().toSeconds() > 0) {
+                    System.out.println("Contando para " + user.getNickName() + ": " + user.getDuration().toSeconds());
+
                     user.setDuration(Duration.ofSeconds(user.getDuration().toSeconds() - 1));
                 } else {
                     try {

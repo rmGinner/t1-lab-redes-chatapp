@@ -5,7 +5,7 @@ package contracts;
  *
  * @author Rodrigo Machado <a href="mailto:rodrigo.domingos@pucrs.br">rodrigo.domingos@pucrs.br</a>
  */
-public class ResponseDataContract {
+public class ResponseMessageContract {
 
     private String to;
 
@@ -13,11 +13,11 @@ public class ResponseDataContract {
 
     private String message;
 
-    public ResponseDataContract() {
+    public ResponseMessageContract() {
 
     }
 
-    public ResponseDataContract(
+    public ResponseMessageContract(
             String from,
             String message,
             String to
